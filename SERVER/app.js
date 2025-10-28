@@ -60,7 +60,7 @@ router.patch("/{*path}", async (req, res) => {
   }
 });
 
-// Delete Folders and Files
+// Delete Folders and filesg
 router.delete("/{*path}", async (req, res) => {
   try {
     const fullPath = createPath(req.params.path);
@@ -72,11 +72,6 @@ router.delete("/{*path}", async (req, res) => {
     res.json({ message: error.message });
   }
 });
-
-
-
-
-
 
 router.post("/upload", upload.single("file"), async (req, res, next) => {
   if(!req.file) return res.status(400).json({message: 'please choose a file then upload!'});

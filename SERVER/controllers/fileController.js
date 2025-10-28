@@ -31,6 +31,13 @@ export const uploadFile = async (req, res, next) => {
     });
     req.pipe(writeStream);
 
+    req.on("aborted", async () => {
+      await rm(`${path.dirname(import.meta.dirname)}/storage/${fullFileName}`, {
+        recursive: true,
+      });
+      return res.status(201).json({ message: "File not upload" });
+    });
+
     req.on("end", async () => {
       await File.create({
         _id: fileId,

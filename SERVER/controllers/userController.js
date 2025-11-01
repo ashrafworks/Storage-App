@@ -8,31 +8,32 @@ export const register = async (req, res, next) => {
   const userId = new Types.ObjectId();
   const session = await startSession();
   try {
-    const foundUser = await User.findOne({ email: email });
-    console.log(foundUser);
-    if (foundUser) {
-      return res.status(409).json({
-        error: "User already exists",
-        message:
-          "A user with this email address already exists. Please try logging in or use a different email.",
-      });
-    }
 
     session.startTransaction();
 
-    await Directory.create([{
-        _id: dirId,
-        name: `root-${email}`,
-        userId,
-      }], {session});
+    await Directory.create(
+      [
+        {
+          _id: dirId,
+          name: `root-${email}`,
+          userId,
+        },
+      ],
+      { session }
+    );
 
-    await User.create([{
-      _id: userId,
-      name,
-      email,
-      password,
-      rootDirId: dirId,
-    }], {session});
+    await User.create(
+      [
+        {
+          _id: userId,
+          name,
+          email,
+          password,
+          rootDirId: dirId,
+        },
+      ],
+      { session }
+    );
 
     session.commitTransaction();
 
@@ -45,11 +46,21 @@ export const register = async (req, res, next) => {
 
   } catch (error) {
     session.abortTransaction();
-    if(error.code === 121) {
-      console.log({error: error.errInfo.details.title})
-      return res.status(400).json({error: 'Invalid input enter a valid input fields'});
+    if (error.code === 121) {
+      return res
+        .status(400)
+        .json({ error: "Invalid input enter a valid input fields" });
     }
-    console.log(error)
+    else if (error.code === 11000) {
+      console.log(error.keyValue);
+      if (error.keyValue.email) {
+        return res.status(409).json({
+          error: "This email already exists",
+          message:
+            "A user with this email address already exists. Please try logging in or use a different email.",
+        });
+      }
+    }
     next(error);
   }
 };
@@ -57,7 +68,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({email: email}).lean();
+  const user = await User.findOne({ email: email }).lean();
 
   if (!user || user.password !== password) {
     return res.status(404).json({ error: "Invalid Credentials" });

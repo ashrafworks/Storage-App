@@ -1,6 +1,7 @@
 import { startSession, Types } from "mongoose";
 import Directory from "../models/DirectoryModel.js";
 import User from "../models/UserModel.js";
+import Session from "../models/SessionModel.js";
 
 export const register = async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -37,12 +38,7 @@ export const register = async (req, res, next) => {
 
     session.commitTransaction();
 
-    res.cookie("uid", userId.toString(), {
-      httpOnly: true,
-      maxAge: 60 * 1000 * 60 * 24 * 7,
-    });
-
-    return res.json({ message: "user register successfully" });
+    return res.status(200).json({ message: "user register successfully" });
 
   } catch (error) {
     session.abortTransaction();
@@ -68,15 +64,29 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email: email }).lean();
+  const user = await User.findOne({ email: email });
 
-  if (!user || user.password !== password) {
+  if (!user) {
     return res.status(404).json({ error: "Invalid Credentials" });
   }
 
-  res.cookie("uid", user._id.toString(), {
+  const match = await user.comparePassword(password);
+
+  if(!match) return res.status(404).json({ error: "Invalid Credentials" });
+
+  const allSessions = await Session.find({userId: user.id}); // user.id mongoose ki functionality hai mongoose samjh jata hai
+  if(allSessions.length >= 2) {
+    await allSessions[0].deleteOne();
+  }
+
+  const session = await Session.create({
+    userId: user._id,
+  });
+
+  res.cookie("sid", session._id.toString(), {
     httpOnly: true,
-    maxAge: 60 * 1000 * 60 * 24 * 7,
+    maxAge: 60 * 1000 * 10,
+    signed: true,
   });
 
   res.json({ message: "logged in user successfully" });
@@ -89,7 +99,18 @@ export const getUser = (req, res) => {
   });
 };
 
-export const logout = (req, res) => {
-  res.clearCookie("uid");
+export const logout = async (req, res) => {
+
+  await req.session.deleteOne();
+
+  res.clearCookie("sid");
+  res.status(204).end();
+};
+
+export const logoutAll = async (req, res) => {
+
+  await Session.deleteMany({userId: req.user.id});
+
+  res.clearCookie("sid");
   res.status(204).end();
 };

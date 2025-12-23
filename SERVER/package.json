@@ -4,13 +4,14 @@
   "main": "practics.js",
   "type": "module",
   "scripts": {
-    "start": "node --watch practics.js"
+    "dev": "node --watch app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",

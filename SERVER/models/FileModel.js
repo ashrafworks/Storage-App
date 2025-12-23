@@ -12,11 +12,11 @@ const fileSchema = new mongoose.Schema({
         trim: true,
     },
     userId: {
-        type: Schema.ObjectId,
+        type: Schema.Types.ObjectId,
         required: [true, 'userId is required'],
     },
     parentDirId: {
-        type: Schema.ObjectId,
+        type: Schema.Types.ObjectId,
         required: [true, 'parentDirId is required'],
     },
 }, {

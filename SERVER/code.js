@@ -24,5 +24,4 @@ console.log(insertUserdirectory)
 } catch (error) {
   session.abortTransaction();
   console.log(error);
-  // console.log(error..errInfo.details)
 }
